@@ -86,7 +86,7 @@ Thirdparty/
     └── share/
 ```
 
-Please make sure that the LibTorch version is compatible with the CUDA version used on your system.
+Please make sure that the LibTorch version is compatible with the CUDA version and NVIDIA driver used on your system.
 
 ---
 
@@ -164,24 +164,159 @@ The current model follows the VOC/SBD 20-class segmentation setting. In the RGB-
 
 ---
 
-## 6. Recommended Environment
+## 6. Reproducibility Environment
 
-The code is intended for Linux-based RGB-D SLAM experiments.
+The following environment is the reference environment used for developing and testing this project. Exact hardware matching is not strictly required, but a CUDA-capable NVIDIA GPU is recommended for YOLO segmentation inference.
 
-Recommended environment:
+### 6.1 Reference Hardware
+
+The experiments in the manuscript were mainly conducted on the following workstation:
 
 ```text
-Ubuntu 20.04 / 22.04
-CMake >= 3.10
-GCC / G++
-OpenCV
-Eigen3
-Pangolin
-CUDA
-LibTorch
+GPU: NVIDIA GeForce RTX 4090
+CPU: Intel Core i9-13900KF
+RAM: 128 GB DDR5
+Operating System: Ubuntu 20.04
+Input RGB-D resolution: 640 x 480
 ```
 
-Please make sure that OpenCV, Pangolin, Eigen3, CUDA, and LibTorch are correctly installed before building the project.
+A lower-end GPU can also be used for functional testing, but the real-time performance may be lower than the reported experimental results.
+
+---
+
+### 6.2 SLAM Runtime Environment
+
+The RGB-D SLAM system is implemented in C++ and depends on ORB-SLAM3-style third-party libraries, OpenCV, Pangolin, Eigen, CUDA, and LibTorch.
+
+Recommended runtime environment:
+
+```text
+Operating System: Ubuntu 20.04 / Ubuntu 22.04
+Compiler: GCC/G++ 9 or later
+CMake: >= 3.10
+OpenCV: 4.x
+Eigen3: 3.x
+Pangolin: compatible with ORB-SLAM3
+CUDA: CUDA 11.x / CUDA 12.x
+LibTorch: C++ distribution compatible with the local CUDA version
+```
+
+Reference development environment:
+
+```text
+Ubuntu 20.04
+OpenCV 4.5
+Eigen3
+CUDA-enabled LibTorch
+```
+
+LibTorch is not included in this repository because of its large file size. Please download the C++ LibTorch package manually and place it under:
+
+```text
+Thirdparty/libtorch/
+```
+
+Expected structure:
+
+```text
+Thirdparty/
+└── libtorch/
+    ├── include/
+    ├── lib/
+    └── share/
+```
+
+Please make sure that the LibTorch CUDA version is compatible with your local NVIDIA driver and CUDA runtime.
+
+---
+
+### 6.3 YOLO Training Environment
+
+The YOLO segmentation model was trained in a Python environment. The following environment is recommended for reproducing or fine-tuning the semantic segmentation model.
+
+Create a new Conda environment:
+
+```bash
+conda create -n yzslam_yolo python=3.10 -y
+conda activate yzslam_yolo
+```
+
+Install PyTorch with CUDA 12.1 support:
+
+```bash
+pip install torch==2.5.1 torchvision==0.20.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121
+```
+
+Install common training dependencies:
+
+```bash
+pip install ultralytics opencv-python numpy matplotlib pandas tqdm pyyaml scipy
+```
+
+Recommended YOLO training configuration:
+
+```text
+Dataset: VOC + SBD
+Number of classes: 20
+Input size: 640 x 640
+Training epochs: 200
+Batch size: 32
+Train/validation split: 8:2
+Model format for SLAM deployment: TorchScript
+```
+
+The pretrained TorchScript model used by the SLAM system is provided as:
+
+```text
+best.torchscript
+```
+
+The corresponding class-name file is:
+
+```text
+voc.names
+```
+
+The current deployment model follows the VOC/SBD 20-class setting. In the RGB-D SLAM experiments, the `person` category is used as the main dynamic-object semantic prior.
+
+---
+
+### 6.4 Python Environment for Evaluation Scripts
+
+Some evaluation scripts may require a lightweight Python environment. A typical setup is:
+
+```bash
+conda create -n yzslam_eval python=3.8 -y
+conda activate yzslam_eval
+pip install numpy matplotlib pandas scipy evo
+```
+
+The `evo` package can be used for APE/RPE trajectory evaluation if trajectory files are exported in a compatible format.
+
+---
+
+### 6.5 Important Environment Notes
+
+Before building or running the system, please check the following items:
+
+```text
+1. Vocabulary/ORBvoc.txt has been extracted from Vocabulary/ORBvoc.zip.
+2. Thirdparty/libtorch/ has been placed correctly.
+3. best.torchscript exists in the repository root directory.
+4. voc.names exists in the repository root directory.
+5. OpenCV, Pangolin, Eigen3, CUDA, and LibTorch are correctly installed.
+6. The dataset path and association file path are correctly set.
+7. The YOLO model path in the source code is consistent with your local repository path.
+```
+
+If the YOLO model path is hard-coded in `src/YoloDetect.cpp`, please modify it before compilation. For example:
+
+```cpp
+static const std::string MODEL_PATH = "/your/path/to/YZSLAM/best.torchscript";
+static const std::string CLASS_PATH = "/your/path/to/YZSLAM/voc.names";
+```
+
+The exact dependency versions do not need to be identical to the reference environment, but CUDA, LibTorch, and the NVIDIA driver must be mutually compatible.
 
 ---
 
@@ -238,10 +373,13 @@ YZSLAM/
     ├── TUM/
     │   ├── rgbd_dataset_freiburg1_xyz/
     │   ├── rgbd_dataset_freiburg2_desk/
-    │   └── rgbd_dataset_freiburg3_walking_xyz/
+    │   ├── rgbd_dataset_freiburg3_sitting_static/
+    │   ├── rgbd_dataset_freiburg3_sitting_xyz/
+    │   ├── rgbd_dataset_freiburg3_walking_static/
+    │   └── rgbd_dataset_freiburg3_walking_rpy/
     └── Bonn/
-        ├── rgbd_bonn_crowd/
-        └── rgbd_bonn_person_tracking/
+        ├── rgbd_bonn_person_tracking/
+        └── rgbd_bonn_crowd/
 ```
 
 The `datasets/` folder is only used locally and should not be uploaded to GitHub.
@@ -267,7 +405,7 @@ Example TUM sequence structure:
 ```text
 datasets/
 └── TUM/
-    └── rgbd_dataset_freiburg3_walking_xyz/
+    └── rgbd_dataset_freiburg3_walking_rpy/
         ├── rgb/
         ├── depth/
         ├── groundtruth.txt
@@ -282,31 +420,31 @@ The general command format for TUM RGB-D sequences is:
 ./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt CONFIG_FILE DATASET_SEQUENCE_PATH ASSOCIATION_FILE
 ```
 
-Example for `freiburg3_walking_xyz`:
+Example for `fr3_sitting_static`:
 
 ```bash
-./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM3.yaml datasets/TUM/rgbd_dataset_freiburg3_walking_xyz datasets/TUM/rgbd_dataset_freiburg3_walking_xyz/associations.txt
+./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM3.yaml datasets/TUM/rgbd_dataset_freiburg3_sitting_static datasets/TUM/rgbd_dataset_freiburg3_sitting_static/associations.txt
 ```
 
-Example for `freiburg1_xyz`:
+Example for `fr3_sitting_xyz`:
 
 ```bash
-./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM1.yaml datasets/TUM/rgbd_dataset_freiburg1_xyz datasets/TUM/rgbd_dataset_freiburg1_xyz/associations.txt
+./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM3.yaml datasets/TUM/rgbd_dataset_freiburg3_sitting_xyz datasets/TUM/rgbd_dataset_freiburg3_sitting_xyz/associations.txt
 ```
 
-Example for `freiburg2_desk`:
-
-```bash
-./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM2.yaml datasets/TUM/rgbd_dataset_freiburg2_desk datasets/TUM/rgbd_dataset_freiburg2_desk/associations.txt
-```
-
-Example for another TUM dynamic sequence:
+Example for `fr3_walking_static`:
 
 ```bash
 ./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM3.yaml datasets/TUM/rgbd_dataset_freiburg3_walking_static datasets/TUM/rgbd_dataset_freiburg3_walking_static/associations.txt
 ```
 
-Please replace the sequence name and YAML configuration file according to the selected TUM sequence.
+Example for `fr3_walking_rpy`:
+
+```bash
+./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/TUM3.yaml datasets/TUM/rgbd_dataset_freiburg3_walking_rpy datasets/TUM/rgbd_dataset_freiburg3_walking_rpy/associations.txt
+```
+
+For other TUM sequences, replace the sequence folder name and YAML configuration file according to the selected dataset.
 
 ---
 
@@ -338,16 +476,16 @@ The general command format for Bonn RGB-D Dynamic Dataset sequences is:
 ./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/Bonn.yaml DATASET_SEQUENCE_PATH ASSOCIATION_FILE
 ```
 
-Example for `rgbd_bonn_crowd`:
-
-```bash
-./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/Bonn.yaml datasets/Bonn/rgbd_bonn_crowd datasets/Bonn/rgbd_bonn_crowd/associations.txt
-```
-
 Example for `rgbd_bonn_person_tracking`:
 
 ```bash
 ./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/Bonn.yaml datasets/Bonn/rgbd_bonn_person_tracking datasets/Bonn/rgbd_bonn_person_tracking/associations.txt
+```
+
+Example for `rgbd_bonn_crowd`:
+
+```bash
+./Examples/RGB-D/rgbd_tum Vocabulary/ORBvoc.txt Examples/RGB-D/Bonn.yaml datasets/Bonn/rgbd_bonn_crowd datasets/Bonn/rgbd_bonn_crowd/associations.txt
 ```
 
 If `Examples/RGB-D/Bonn.yaml` is not available, please create it according to the camera parameters of the Bonn RGB-D Dynamic Dataset, or modify an existing TUM RGB-D YAML file according to the Bonn dataset calibration.
@@ -435,4 +573,3 @@ videos/
 These files are excluded to keep the repository lightweight and avoid large-file upload limitations.
 
 ---
-
