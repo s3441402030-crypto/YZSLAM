@@ -1,0 +1,72 @@
+%YAML:1.0
+
+#--------------------------------------------------------------------------------------------
+# Camera Parameters. Adjust them!
+#--------------------------------------------------------------------------------------------
+File.version: "1.0"
+
+Camera.type: "PinHole"
+
+# Camera calibration and distortion parameters (Bonn Dataset Official) 
+# 使用你提供的 fx, fy, cx, cy
+Camera1.fx: 542.822841
+Camera1.fy: 542.576870
+Camera1.cx: 315.593520
+Camera1.cy: 237.756098
+
+# 畸变参数 d0, d1, d2, d3, d4 对应 k1, k2, p1, p2, k3
+Camera1.k1: 0.039903
+Camera1.k2: -0.099343
+Camera1.p1: -0.000730
+Camera1.p2: -0.000144
+Camera1.k3: 0.0
+
+Camera.width: 640
+Camera.height: 480
+
+# Camera frames per second (Bonn数据集通常为30fps)
+Camera.fps: 30
+
+# Color order of the images (0: BGR, 1: RGB. It is ignored if images are grayscale)
+Camera.RGB: 1
+
+# Close/Far threshold. Baseline times.
+# 对于Kinect v1设备，基线通常设为 0.075 左右
+Stereo.ThDepth: 40.0
+Stereo.b: 0.075
+
+# Depth map values factor
+# Bonn数据集与TUM一致，均为 5000.0
+RGBD.DepthMapFactor: 5000.0
+
+#--------------------------------------------------------------------------------------------
+# ORB Parameters
+#--------------------------------------------------------------------------------------------
+
+# ORB Extractor: Number of features per image
+# 针对动态环境，保持 2000 个特征点可以提高跟踪稳定性
+ORBextractor.nFeatures: 2000
+
+# ORB Extractor: Scale factor between levels in the scale pyramid 	
+ORBextractor.scaleFactor: 1.2
+
+# ORB Extractor: Number of levels in the scale pyramid	
+ORBextractor.nLevels: 8
+
+# ORB Extractor: Fast threshold
+ORBextractor.iniThFAST: 20
+ORBextractor.minThFAST: 7
+
+#--------------------------------------------------------------------------------------------
+# Viewer Parameters
+#--------------------------------------------------------------------------------------------
+Viewer.KeyFrameSize: 0.05
+Viewer.KeyFrameLineWidth: 1.0
+Viewer.GraphLineWidth: 0.9
+Viewer.PointSize: 2.0
+Viewer.CameraSize: 0.08
+Viewer.CameraLineWidth: 3.0
+Viewer.ViewpointX: 0.0
+Viewer.ViewpointY: -0.7
+Viewer.ViewpointZ: -1.8
+Viewer.ViewpointF: 500.0

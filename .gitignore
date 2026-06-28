@@ -1,0 +1,67 @@
+# build outputs
+build/
+lib/
+bin/
+*.so
+*.a
+*.o
+*.out
+*.exe
+*.dll
+*.lib
+
+# CMake temporary files
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# external large dependency
+Thirdparty/libtorch/
+Thirdparty/libtorch*/
+libtorch/
+libtorch*/
+Thirdparty/libtorch.rar
+libtorch.rar
+libtorch*.zip
+libtorch*.rar
+
+# vocabulary
+Vocabulary/ORBvoc.txt
+
+# ignore compressed packages by default
+*.zip
+*.rar
+*.7z
+*.tar
+*.gz
+
+# allow ORB vocabulary zip only
+!Vocabulary/ORBvoc.zip
+
+# large model weights
+*.pt
+*.pth
+*.onnx
+*.engine
+
+# allow small torchscript model
+!best.torchscript
+
+# datasets and videos
+data/
+rgb/
+depth/
+*.mp4
+*.avi
+*.bag
+
+# Python cache
+__pycache__/
+*.pyc
+
+# IDE / system
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
